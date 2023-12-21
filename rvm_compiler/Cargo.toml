@@ -1,0 +1,11 @@
+[package]
+name = "rvm_compiler"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ariadne = { version = "0.3.0", features = ["auto-color"] }
+chumsky = "0.9.3"
+
+[lib]
+doctest = false
