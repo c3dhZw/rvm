@@ -11,7 +11,9 @@ pub mod register;
 pub mod trap;
 
 pub static mut RUNNING: bool = true;
-pub const PC_START: u16 = 0x3000;
+pub static mut PC: u16 = 0;
+pub static mut PC_START: u16 = 0;
+// pub const PC_START: u16 = 0x3000;
 
 pub fn load_image(name: &str, offset: u16) {
   let mut file = File::open(name).unwrap();
@@ -19,21 +21,34 @@ pub fn load_image(name: &str, offset: u16) {
 
   file.read_to_end(&mut buffer).unwrap();
 
-  let start = PC_START + offset;
+  let header = u16::from_be_bytes([buffer[0], buffer[1]]);
+
+  let buffer = &buffer[2..];
+
+  // let start = PC_START + offset;
+  let start = unsafe {
+    PC_START = offset + header;
+
+    PC_START
+  };
 
   memory::load(buffer, start);
 }
 
 pub fn run(offset: u16) {
-  assert!(offset < u16::MAX - PC_START);
+  let start = unsafe { PC_START };
+  assert!(offset < u16::MAX - start);
 
-  *reg_r(Register::Pc) = PC_START + offset;
+  *reg_r(Register::Pc) = start + offset;
 
-  while unsafe { RUNNING } {
-    let pc = *reg_r(Register::Pc);
-    let i = read(pc);
-    *reg_r(Register::Pc) = pc + 1;
+  unsafe {
+    while RUNNING {
+      PC = *reg_r(Register::Pc);
 
-    op(i);
+      let i = read(PC);
+      *reg_r(Register::Pc) = PC + 1;
+
+      op(i);
+    }
   }
 }

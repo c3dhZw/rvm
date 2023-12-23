@@ -2,7 +2,7 @@ use std::env::args;
 use std::fs::{read_to_string, File};
 use std::io::Write;
 
-use rvm_compiler::print_errors;
+use rvm_compiler::parsing::print_errors;
 
 fn main() {
   let (in_file, out_file) = (args().nth(1), args().nth(2));
@@ -14,9 +14,9 @@ fn main() {
   let in_file = in_file.unwrap();
   let out_file = out_file.unwrap();
 
-  let contents = read_to_string(in_file).unwrap();
+  let contents = read_to_string(in_file).unwrap().to_ascii_lowercase();
 
-  let program = match rvm_compiler::parse(&contents) {
+  let program = match rvm_compiler::parsing::parse(&contents) {
     Ok(program) => program,
     Err(errs) => {
       print_errors(&contents, errs);
@@ -25,11 +25,11 @@ fn main() {
     }
   };
 
-  let out = format!("{:?}", program.instructions);
+  let bytecode = rvm_compiler::serialize(&program);
 
   let mut file = File::create(&out_file).unwrap();
 
-  file.write_all(out.as_bytes()).unwrap();
+  file.write_all(&bytecode).unwrap();
 
   println!("written to `{out_file}`");
 }

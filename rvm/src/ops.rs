@@ -180,6 +180,11 @@ static OPS: [fn(u16); OP_COUNT] = [
   op_jmp, op_res, op_lea, op_trap,
 ];
 
+pub static OP_NAMES: [&str; OP_COUNT] = [
+  "br", "add", "ld", "st", "jsr", "and", "ldr", "str", "rti", "not", "ldi", "sti", "jmp", "res",
+  "lea", "trap",
+];
+
 #[inline]
 fn sext(x: u16, bit_count: u16) -> u16 {
   if (x >> (bit_count - 1)) & 1 == 1 {
@@ -189,17 +194,82 @@ fn sext(x: u16, bit_count: u16) -> u16 {
   }
 }
 
-static mut COUNT: u16 = 0;
-
 pub fn op(i: u16) {
-  unsafe {
-    COUNT += 1;
-
-    if COUNT > 30 {
-      panic!("Too many instructions");
-    }
-  }
-  println!("i: {:04x}, pc: {:04x}", i, *reg_r(Register::Pc));
-
   OPS[opc(i)](i);
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_opc() {
+    assert_eq!(opc(0b0000_0000_0000_0000), 0);
+    assert_eq!(opc(0b0001_0000_0000_0000), 1);
+    assert_eq!(opc(0b0010_0000_0000_0000), 2);
+    assert_eq!(opc(0b0011_0000_0000_0000), 3);
+    assert_eq!(opc(0b0100_0000_0000_0000), 4);
+    assert_eq!(opc(0b0101_0000_0000_0000), 5);
+    assert_eq!(opc(0b0110_0000_0000_0000), 6);
+    assert_eq!(opc(0b0111_0000_0000_0000), 7);
+    assert_eq!(opc(0b1000_0000_0000_0000), 8);
+    assert_eq!(opc(0b1001_0000_0000_0000), 9);
+    assert_eq!(opc(0b1010_0000_0000_0000), 10);
+    assert_eq!(opc(0b1011_0000_0000_0000), 11);
+    assert_eq!(opc(0b1100_0000_0000_0000), 12);
+    assert_eq!(opc(0b1101_0000_0000_0000), 13);
+    assert_eq!(opc(0b1110_0000_0000_0000), 14);
+    assert_eq!(opc(0b1111_0000_0000_0000), 15);
+
+    assert_eq!(opc(0xF026), 15);
+    assert_eq!(opc(0x1200), 1);
+    assert_eq!(opc(0x1240), 1);
+    assert_eq!(opc(0x1040), 1);
+    assert_eq!(opc(0xF027), 15);
+    assert_eq!(opc(0xF025), 15);
+  }
+
+  fn assert_fn_eq(f: fn(u16), g: fn(u16)) {
+    assert_eq!(f as usize, g as usize);
+  }
+
+  #[test]
+  fn test_ops() {
+    assert_fn_eq(OPS[0], op_br);
+    assert_fn_eq(OPS[1], op_add);
+    assert_fn_eq(OPS[2], op_ld);
+    assert_fn_eq(OPS[3], op_st);
+    assert_fn_eq(OPS[4], op_jsr);
+    assert_fn_eq(OPS[5], op_and);
+    assert_fn_eq(OPS[6], op_ldr);
+    assert_fn_eq(OPS[7], op_str);
+    assert_fn_eq(OPS[8], op_rti);
+    assert_fn_eq(OPS[9], op_not);
+    assert_fn_eq(OPS[10], op_ldi);
+    assert_fn_eq(OPS[11], op_sti);
+    assert_fn_eq(OPS[12], op_jmp);
+    assert_fn_eq(OPS[13], op_res);
+    assert_fn_eq(OPS[14], op_lea);
+    assert_fn_eq(OPS[15], op_trap);
+  }
+
+  #[test]
+  fn test_op_names() {
+    assert_eq!(OP_NAMES[0], "br");
+    assert_eq!(OP_NAMES[1], "add");
+    assert_eq!(OP_NAMES[2], "ld");
+    assert_eq!(OP_NAMES[3], "st");
+    assert_eq!(OP_NAMES[4], "jsr");
+    assert_eq!(OP_NAMES[5], "and");
+    assert_eq!(OP_NAMES[6], "ldr");
+    assert_eq!(OP_NAMES[7], "str");
+    assert_eq!(OP_NAMES[8], "rti");
+    assert_eq!(OP_NAMES[9], "not");
+    assert_eq!(OP_NAMES[10], "ldi");
+    assert_eq!(OP_NAMES[11], "sti");
+    assert_eq!(OP_NAMES[12], "jmp");
+    assert_eq!(OP_NAMES[13], "res");
+    assert_eq!(OP_NAMES[14], "lea");
+    assert_eq!(OP_NAMES[15], "trap");
+  }
 }

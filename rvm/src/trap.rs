@@ -1,7 +1,7 @@
-use std::io::{stdin, Read};
+use std::io::{stdin, stdout, Read, Write};
 
 use crate::memory::read;
-use crate::register::reg;
+use crate::register::{reg_r, Register};
 use crate::RUNNING;
 
 fn read_char() -> char {
@@ -15,15 +15,19 @@ fn read_char() -> char {
 }
 
 fn trap_get_char() {
-  *reg(0x0) = read_char() as u16;
+  let mut lock = stdout().lock();
+  write!(lock, "input: ").unwrap();
+  lock.flush().unwrap();
+
+  *reg_r(Register::R0) = read_char() as u16;
 }
 
 fn trap_out() {
-  print!("{}", *reg(0x0) as u8 as char);
+  print!("output: {}", *reg_r(Register::R0) as u8 as char);
 }
 
 fn trap_puts() {
-  let mut address = *reg(0x0);
+  let mut address = *reg_r(Register::R0);
 
   loop {
     let c = read(address) as u8;
@@ -41,7 +45,7 @@ fn trap_puts() {
 fn trap_in() {
   trap_get_char();
 
-  print!("{}", *reg(0x0) as u8 as char);
+  print!("{}", *reg_r(Register::R0) as u8 as char);
 }
 
 fn trap_putsp() {}
@@ -55,13 +59,16 @@ fn trap_halt() {
 fn trap_in_u16() {
   let mut buffer = String::new();
 
+  let mut lock = stdout().lock();
+  write!(lock, "input: ").unwrap();
+  lock.flush().unwrap();
   stdin().read_line(&mut buffer).unwrap();
 
-  *reg(0x0) = buffer.trim().parse().unwrap();
+  *reg_r(Register::R0) = buffer.trim().parse().unwrap();
 }
 
 fn trap_out_u16() {
-  print!("{}", *reg(0x0));
+  println!("output: {}", *reg_r(Register::R0));
 }
 
 static mut TRAPS: [fn(); 8] = [

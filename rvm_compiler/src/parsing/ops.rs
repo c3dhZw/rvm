@@ -4,8 +4,8 @@ use chumsky::text::TextParser;
 use chumsky::Parser;
 
 use crate::instructions::{Instruction, TrapVect};
-use crate::registers::parse_register;
-use crate::utils::{comma, parse_number};
+use crate::parsing::registers::parse_register;
+use crate::parsing::utils::{comma, parse_number};
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Op {

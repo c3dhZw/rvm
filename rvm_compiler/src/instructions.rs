@@ -98,6 +98,126 @@ pub enum Instruction {
   /// ```
   Trap(TrapVect),
 }
+impl Instruction {
+  pub fn bytecode(&self) -> u16 {
+    match self {
+      Instruction::Br(n, z, p, offset9) => {
+        let mut out = 0b0000_0000_0000_0000;
+        if *n {
+          out |= 0b0000_1000_0000_0000;
+        }
+        if *z {
+          out |= 0b0000_0100_0000_0000;
+        }
+        if *p {
+          out |= 0b0000_0010_0000_0000;
+        }
+        out |= u16::from(*offset9);
+        out
+      }
+      Instruction::Add1(dr, sr1, sr2) => {
+        let mut out = 0b0001_0000_0000_0000;
+        out |= dr.bytecode() << 9;
+        out |= sr1.bytecode() << 6;
+        out |= sr2.bytecode();
+        out
+      }
+      Instruction::Add2(dr, sr1, imm5) => {
+        let mut out = 0b0001_0000_0000_0000;
+        out |= dr.bytecode() << 9;
+        out |= sr1.bytecode() << 6;
+        out |= u16::from(*imm5);
+        out
+      }
+      Instruction::Ld(dr, offset9) => {
+        let mut out = 0b0010_0000_0000_0000;
+        out |= dr.bytecode() << 9;
+        out |= u16::from(*offset9);
+        out
+      }
+      Instruction::St(sr, offset9) => {
+        let mut out = 0b0011_0000_0000_0000;
+        out |= sr.bytecode() << 9;
+        out |= u16::from(*offset9);
+        out
+      }
+      Instruction::Jsr(offset11) => {
+        let mut out = 0b0100_1000_0000_0000;
+        out |= u16::from(*offset11);
+        out
+      }
+      Instruction::Jsrr(base_r) => {
+        let mut out = 0b0100_0000_0000_0000;
+        out |= base_r.bytecode() << 6;
+        out
+      }
+      Instruction::And1(dr, sr1, sr2) => {
+        let mut out = 0b0101_0000_0000_0000;
+        out |= dr.bytecode() << 9;
+        out |= sr1.bytecode() << 6;
+        out |= sr2.bytecode();
+        out
+      }
+      Instruction::And2(dr, sr1, imm5) => {
+        let mut out = 0b0101_0000_0000_0000;
+        out |= dr.bytecode() << 9;
+        out |= sr1.bytecode() << 6;
+        out |= u16::from(*imm5);
+        out
+      }
+      Instruction::Ldr(dr, base_r, offset6) => {
+        let mut out = 0b0110_0000_0000_0000;
+        out |= dr.bytecode() << 9;
+        out |= base_r.bytecode() << 6;
+        out |= u16::from(*offset6);
+        out
+      }
+      Instruction::Str(sr, base_r, offset6) => {
+        let mut out = 0b0111_0000_0000_0000;
+        out |= sr.bytecode() << 9;
+        out |= base_r.bytecode() << 6;
+        out |= u16::from(*offset6);
+        out
+      }
+      Instruction::Rti => 0b1000_0000_0000_0000,
+      Instruction::Not(dr, sr) => {
+        let mut out = 0b1001_0000_0000_0000;
+        out |= dr.bytecode() << 9;
+        out |= sr.bytecode() << 6;
+        out
+      }
+      Instruction::Ldi(dr, offset9) => {
+        let mut out = 0b1010_0000_0000_0000;
+        out |= dr.bytecode() << 9;
+        out |= u16::from(*offset9);
+        out
+      }
+      Instruction::Sti(sr, offset9) => {
+        let mut out = 0b1011_0000_0000_0000;
+        out |= sr.bytecode() << 9;
+        out |= u16::from(*offset9);
+        out
+      }
+      Instruction::Jmp(base_r) => {
+        let mut out = 0b1100_0000_0000_0000;
+        out |= base_r.bytecode() << 6;
+        out
+      }
+      Instruction::Res => 0b1101_0000_0000_0000,
+      Instruction::Lea(dr, offset9) => {
+        let mut out = 0b1110_0000_0000_0000;
+        out |= dr.bytecode() << 9;
+        out |= u16::from(*offset9);
+        out
+      }
+      Instruction::Trap(trap) => {
+        let mut out = 0b1111_0000_0000_0000;
+        out |= trap.bytecode();
+        out
+      }
+    }
+  }
+}
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum TrapVect {
@@ -109,4 +229,10 @@ pub enum TrapVect {
   Halt = 0x25,
   InU16 = 0x26,
   OutU16 = 0x27,
+}
+
+impl TrapVect {
+  pub fn bytecode(&self) -> u16 {
+    *self as u16
+  }
 }
